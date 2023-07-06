@@ -5,8 +5,7 @@ from torch.distributions import MultivariateNormal
 
 import numpy as np
 
-from einops import rearrange
-
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # https://medium.com/analytics-vidhya/coding-ppo-from-scratch-with-pytorch-part-3-4-82081ea58146
 # https://github.com/ericyangyu/PPO-for-Beginners
@@ -14,8 +13,8 @@ class PPO:
     def __init__(self, env):
         self.env = env
         action_space = 4
-        self.actor = CNN(out_dims=action_space)
-        self.critic = CNN(out_dims=1)
+        self.actor = CNN(out_dims=action_space).to(device)
+        self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
         self.cov_var = torch.full(size=(action_space,), fill_value=0.5)
         self.cov_mat = torch.diag(self.cov_var)
@@ -36,7 +35,7 @@ class PPO:
         obs = torch.unsqueeze(obs, dim=0)
         # obs = rearrange(obs, 'b h w c -> b c h w')
 
-        mean = self.actor(obs)
+        mean = self.actor(obs.to(device))
         dist = MultivariateNormal(mean, self.cov_mat)  # Sample an action from the distribution and get its log prob
         action = dist.sample()
         log_prob = dist.log_prob(action)
@@ -44,8 +43,8 @@ class PPO:
 
     def evaluate(self, batch_obs, batch_acts):
         batch_obs = batch_obs.unsqueeze(dim=1)
-        V = self.critic(batch_obs).squeeze()
-        mean = self.actor(batch_obs)
+        V = self.critic(batch_obs.to(device)).squeeze()
+        mean = self.actor(batch_obs.to(device))
         dist = MultivariateNormal(mean, self.cov_mat)
         log_probs = dist.log_prob(batch_acts)  # Return predicted values V and log probs log_probs
         return V, log_probs
@@ -84,7 +83,7 @@ class PPO:
 
         batch_obs = torch.tensor(np.asarray(batch_obs), dtype=torch.float)
         batch_acts = torch.tensor(np.asarray(batch_acts), dtype=torch.float)
-        batch_log_probs = torch.tensor(np.asarray(batch_log_probs), dtype=torch.float)  # ALG STEP #4
+        batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float)  # ALG STEP #4
         batch_rtgs = self.compute_rtgs(batch_rewards)  # Return the batch data
         return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lengths
 
