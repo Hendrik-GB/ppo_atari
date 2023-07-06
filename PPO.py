@@ -35,7 +35,7 @@ class PPO:
         obs = torch.unsqueeze(obs, dim=0)
         # obs = rearrange(obs, 'b h w c -> b c h w')
 
-        mean = self.actor(obs.to(device))
+        mean = self.actor(obs.to(device)).cpu()
         dist = MultivariateNormal(mean, self.cov_mat)  # Sample an action from the distribution and get its log prob
         action = dist.sample()
         log_prob = dist.log_prob(action)
@@ -43,8 +43,8 @@ class PPO:
 
     def evaluate(self, batch_obs, batch_acts):
         batch_obs = batch_obs.unsqueeze(dim=1)
-        V = self.critic(batch_obs.to(device)).squeeze()
-        mean = self.actor(batch_obs.to(device))
+        V = self.critic(batch_obs.to(device)).squeeze().cpu()
+        mean = self.actor(batch_obs.to(device)).cpu()
         dist = MultivariateNormal(mean, self.cov_mat)
         log_probs = dist.log_prob(batch_acts)  # Return predicted values V and log probs log_probs
         return V, log_probs
