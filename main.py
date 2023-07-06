@@ -9,7 +9,7 @@ from gymnasium.wrappers import AtariPreprocessing
 def train(env):
     print(f"Training", flush=True)
 
-    # Create a model for PPO.
+    # Create a model for PPO
     model = PPO(env=env)
     model.learn(total_timesteps=2000000)
 
