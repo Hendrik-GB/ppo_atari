@@ -16,8 +16,8 @@ class PPO:
         self.actor = CNN(out_dims=action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
-        self.cov_var = torch.full(size=(action_space,), fill_value=0.5)
-        self.cov_mat = torch.diag(self.cov_var)
+        self.cov_var = torch.full(size=(action_space,), fill_value=0.5).to(device)
+        self.cov_mat = torch.diag(self.cov_var).to(device)
 
         self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
@@ -35,7 +35,7 @@ class PPO:
         obs = torch.unsqueeze(obs, dim=0)
         # obs = rearrange(obs, 'b h w c -> b c h w')
 
-        mean = self.actor(obs.to(device)).cpu()
+        mean = self.actor(obs.to(device))
         dist = MultivariateNormal(mean, self.cov_mat)  # Sample an action from the distribution and get its log prob
         action = dist.sample()
         log_prob = dist.log_prob(action)
@@ -43,8 +43,8 @@ class PPO:
 
     def evaluate(self, batch_obs, batch_acts):
         batch_obs = batch_obs.unsqueeze(dim=1)
-        V = self.critic(batch_obs.to(device)).squeeze().cpu()
-        mean = self.actor(batch_obs.to(device)).cpu()
+        V = self.critic(batch_obs.to(device)).squeeze()
+        mean = self.actor(batch_obs.to(device))
         dist = MultivariateNormal(mean, self.cov_mat)
         log_probs = dist.log_prob(batch_acts)  # Return predicted values V and log probs log_probs
         return V, log_probs
