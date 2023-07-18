@@ -29,15 +29,16 @@ class PPO:
         self.gamma = 0.95
         self.n_updates_per_iteration = 5
         self.clip = 0.2
-        self.lr = 0.005
+        self.lr = 0.002
 
     def get_action(self, obs):
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
         obs = torch.unsqueeze(obs, dim=0)
-        # obs = rearrange(obs, 'b h w c -> b c h w')
 
         mean = self.actor(obs.to(device)).cpu()
-        dist = MultivariateNormal(mean, self.cov_mat)  # Sample an action from the distribution and get its log prob
+        dist = MultivariateNormal(mean, self.cov_mat)
+
+        # Sample an action from the distribution and get its log prob
         action = dist.sample()
         log_prob = dist.log_prob(action)
         return action.detach().numpy(), log_prob.detach()
@@ -47,7 +48,9 @@ class PPO:
         V = self.critic(batch_obs.to(device)).squeeze().cpu()
         mean = self.actor(batch_obs.to(device)).cpu()
         dist = MultivariateNormal(mean, self.cov_mat)
-        log_probs = dist.log_prob(batch_acts)  # Return predicted values V and log probs log_probs
+        log_probs = dist.log_prob(batch_acts)
+
+        # Return predicted values V and log probs log_probs
         return V, log_probs
 
     def rollout(self):
@@ -61,6 +64,8 @@ class PPO:
         t = 0
         while t < self.timesteps_per_batch:
             ep_rewards = []
+
+            # generate first observation
             obs, _ = self.env.reset()
             done = False
 
@@ -69,6 +74,7 @@ class PPO:
 
                 batch_obs.append(obs)
 
+                # generate action and next observation
                 action, log_prob = self.get_action(obs)
                 obs, reward, done, _, _ = self.env.step(np.argmax(action))
 
@@ -88,36 +94,40 @@ class PPO:
         batch_rtgs = self.compute_rtgs(batch_rewards)  # Return the batch data
         return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lengths
 
+    # calculate ratings for given batch
     def compute_rtgs(self, batch_rews):
         batch_rtgs = []
 
         for ep_rews in reversed(batch_rews):
-            discounted_reward = 0  # The discounted reward so far
+            discounted_reward = 0
 
-            # Iterate through all rewards in the episode. We go backwards for smoother calculation of each
-            # discounted return (think about why it would be harder starting from the beginning)
+            # Iterate through all rewards in the episode. We go backwards for smoother calculation of each discounted return
             for rew in reversed(ep_rews):
                 discounted_reward = rew + discounted_reward * self.gamma
                 batch_rtgs.insert(0, discounted_reward)
 
-        # Convert the rewards-to-go into a tensor
         batch_rtgs = torch.tensor(batch_rtgs, dtype=torch.float)
-
         return batch_rtgs
 
+    # main learning method
     def learn(self, total_timesteps):
         t_so_far = 0
 
         while t_so_far < total_timesteps:
             batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens = self.rollout()
+            v, _ = self.evaluate(batch_obs, batch_acts)
+
             t_so_far += np.sum(batch_lens)
             print('Learned Timesteps:', t_so_far, 'With Ratings:', batch_rtgs)
 
-            v, _ = self.evaluate(batch_obs, batch_acts)
+            # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
+            # update net n times
             for _ in range(self.n_updates_per_iteration):
+
+                # calculate clipped loss
                 _, curr_log_probs = self.evaluate(batch_obs, batch_acts)
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
@@ -125,6 +135,7 @@ class PPO:
                 surr2 = torch.clamp(ratios, 1 - self.clip, 1 + self.clip) * a_k
                 actor_loss = (-torch.min(surr1, surr2)).mean()
 
+                # optimize nets
                 self.actor_optim.zero_grad()
                 actor_loss.backward(retain_graph=True)
                 self.actor_optim.step()
