@@ -7,12 +7,13 @@ import numpy as np
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+
 # https://medium.com/analytics-vidhya/coding-ppo-from-scratch-with-pytorch-part-3-4-82081ea58146
 # https://github.com/ericyangyu/PPO-for-Beginners
 class PPO:
     def __init__(self, env):
         self.env = env
-        action_space = 4
+        action_space = 3
         self.actor = CNN(out_dims=action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()

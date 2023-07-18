@@ -38,7 +38,7 @@ mode = 'train'
 
 
 def main():
-    env = gymnasium.make("ALE/Breakout-v5", obs_type="rgb", frameskip=1)
+    env = gymnasium.make("ALE/Skiing-v5", obs_type="rgb", frameskip=1)
     env = AtariPreprocessing(env)
 
     # Train or test, depending on the mode specified
