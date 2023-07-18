@@ -53,7 +53,7 @@ class PPO:
         log_probs = dist.log_prob(batch_acts)
 
         # Return predicted values V and log probs
-        return V*133, log_probs
+        return V*10, log_probs
 
     def rollout(self):
         batch_obs = []  # batch observations
@@ -125,6 +125,7 @@ class PPO:
 
             # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
+            print('a_k', a_k)
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
             # update net n times
