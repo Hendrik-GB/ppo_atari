@@ -16,7 +16,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 class PPO:
     def __init__(self, env):
         self.env = env
-        action_space = 3
+        action_space = 4
         self.actor = CNN(out_dims=action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
@@ -56,7 +56,7 @@ class PPO:
         log_probs = dist.log_prob(batch_acts)
 
         # Return predicted values V and log probs
-        return V*10, log_probs
+        return V, log_probs
 
     def rollout(self):
         batch_obs = []  # batch observations
@@ -159,7 +159,7 @@ class PPO:
             if iteration % 10 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / ('skiing_' + str(t_so_far) + '.pt')
+                p = p / 'saved-models' / ('breakout_' + str(t_so_far) + '.pt')
 
                 torch.save({
                     'steps': t_so_far,
@@ -168,3 +168,4 @@ class PPO:
                     'actor_optimizer_state_dict': self.actor_optim.state_dict(),
                     'critic_optimizer_state_dict': self.critic_optim.state_dict(),
                 }, p)
+                print('Saved model at', t_so_far, 'time steps')

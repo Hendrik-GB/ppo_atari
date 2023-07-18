@@ -1,9 +1,12 @@
 import gymnasium
 import torch
+import os
 
 from PPO import PPO
 from Network import CNN
 from gymnasium.wrappers import AtariPreprocessing
+from pathlib import Path
+from torch.distributions import Categorical
 
 
 def train(env):
@@ -17,34 +20,44 @@ def train(env):
 def test(env):
     print(f"Testing", flush=True)
 
-    # Extract out dimensions of observation and action spaces
-    obs_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.shape[0]
+    # path to saved model
+    p = Path(os.getcwd()).parent.absolute()
+    p = p / 'saved-models' / 'skiing_48000.pt'
 
-    # Build our policy the same way we build our actor model in PPO
-    # policy = CNN(obs_dim, act_dim)
+    device = torch.device('cpu')
+    actor = CNN(out_dims=4)
 
-    # Load in the actor model saved by the PPO algorithm
-    # policy.load_state_dict(torch.load(actor_model))
+    checkpoint = torch.load(p, map_location=device)
+    actor.load_state_dict(checkpoint['actor_state_dict'])
 
-    # Evaluate our policy with a separate module, eval_policy, to demonstrate
-    # that once we are done training the model/policy with ppo.py, we no longer need
-    # ppo.py since it only contains the training algorithm. The model/policy itself exists
-    # independently as a binary file that can be loaded in with torch.
-    # eval_policy(policy=policy, env=env, render=True)
+    done = False
+    obs, _ = env.reset()
+
+    while not done:
+        obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
+        obs = torch.unsqueeze(obs, dim=0)
+        logits = actor(obs.to(device)).cpu()
+        dist = Categorical(logits=logits)
+
+        # Sample an action from the distribution and get its log prob
+        action = dist.sample()
+        obs, reward, done, _, _ = env.step(action)
+        print(reward)
 
 
 mode = 'train'
+game = 'ALE/Breakout-v5'
 
 
 def main():
-    env = gymnasium.make("ALE/Skiing-v5", obs_type="rgb", frameskip=1)
-    env = AtariPreprocessing(env)
-
     # Train or test, depending on the mode specified
     if mode == 'train':
+        env = gymnasium.make(game, obs_type="rgb", frameskip=1)
+        env = AtariPreprocessing(env)
         train(env=env)
-    else:
+    elif mode == 'test':
+        env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
+        env = AtariPreprocessing(env)
         test(env=env)
 
 
