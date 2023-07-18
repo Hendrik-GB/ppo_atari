@@ -93,7 +93,7 @@ class PPO:
 
         batch_obs = torch.tensor(np.asarray(batch_obs), dtype=torch.float)
         batch_acts = torch.tensor(np.asarray(batch_acts), dtype=torch.float)
-        batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float)  # ALG STEP #4
+        batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float)
         batch_rtgs = self.compute_rtgs(batch_rewards)  # Return the batch data
         return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lengths
 
@@ -121,7 +121,7 @@ class PPO:
             v, _ = self.evaluate(batch_obs, batch_acts)
 
             t_so_far += np.sum(batch_lens)
-            print('Learned Timesteps:', t_so_far, 'With Ratings:', batch_rtgs)
+            print('Learned Timesteps:', t_so_far, 'With Ratings:', batch_rtgs, 'actions:', batch_acts)
 
             # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
