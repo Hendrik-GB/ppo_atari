@@ -1,7 +1,7 @@
 from Network import CNN
 
 import torch
-from torch.distributions import MultivariateNormal
+from torch.distributions import Categorical
 
 import numpy as np
 
@@ -17,8 +17,6 @@ class PPO:
         self.actor = CNN(out_dims=action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
-        self.cov_var = torch.full(size=(action_space,), fill_value=0.5)
-        self.cov_mat = torch.diag(self.cov_var)
 
         self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
@@ -34,23 +32,27 @@ class PPO:
     def get_action(self, obs):
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
         obs = torch.unsqueeze(obs, dim=0)
-
-        mean = self.actor(obs.to(device)).cpu()
-        dist = MultivariateNormal(mean, self.cov_mat)
+        logits = self.actor(obs.to(device)).cpu()
+        dist = Categorical(logits=logits)
 
         # Sample an action from the distribution and get its log prob
         action = dist.sample()
         log_prob = dist.log_prob(action)
-        return action.detach().numpy(), log_prob.detach()
+        return action.detach()[0], log_prob.detach()
 
+    # calculate predicted score and probability of actions
     def evaluate(self, batch_obs, batch_acts):
         batch_obs = batch_obs.unsqueeze(dim=1)
+
+        # calculate predicted score woth critic
         V = self.critic(batch_obs.to(device)).squeeze().cpu()
-        mean = self.actor(batch_obs.to(device)).cpu()
-        dist = MultivariateNormal(mean, self.cov_mat)
+
+        # calculate log prob of actions
+        logits = self.actor(batch_obs.to(device)).cpu()
+        dist = Categorical(logits=logits)
         log_probs = dist.log_prob(batch_acts)
 
-        # Return predicted values V and log probs log_probs
+        # Return predicted values V and log probs
         return V, log_probs
 
     def rollout(self):
@@ -76,7 +78,8 @@ class PPO:
 
                 # generate action and next observation
                 action, log_prob = self.get_action(obs)
-                obs, reward, done, _, _ = self.env.step(np.argmax(action))
+                # print('action:', action)
+                obs, reward, done, _, _ = self.env.step(action)
 
                 batch_acts.append(action)
                 batch_log_probs.append(log_prob)
