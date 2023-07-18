@@ -3,6 +3,9 @@ from Network import CNN
 import torch
 from torch.distributions import Categorical
 
+from pathlib import Path
+import os
+
 import numpy as np
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -115,8 +118,10 @@ class PPO:
     # main learning method
     def learn(self, total_timesteps):
         t_so_far = 0
+        iteration = 0
 
         while t_so_far < total_timesteps:
+            iteration = iteration + 1
             batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens = self.rollout()
             v, _ = self.evaluate(batch_obs, batch_acts)
 
@@ -149,3 +154,17 @@ class PPO:
                 self.critic_optim.zero_grad()
                 critic_loss.backward()
                 self.critic_optim.step()
+
+            # save model
+            if iteration % 10 == 0:
+                # path to data folder
+                p = Path(os.getcwd()).parent.absolute()
+                p = p / 'saved-models' / ('skiing_' + str(t_so_far) + '.pt')
+
+                torch.save({
+                    'steps': t_so_far,
+                    'actor_state_dict': self.actor.state_dict(),
+                    'critic_state_dict': self.critic.state_dict(),
+                    'actor_optimizer_state_dict': self.actor_optim.state_dict(),
+                    'critic_optimizer_state_dict': self.critic_optim.state_dict(),
+                }, p)
