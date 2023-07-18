@@ -14,7 +14,7 @@ def train(env):
 
     # Create a model for PPO
     model = PPO(env=env)
-    model.learn(total_timesteps=2000000)
+    model.learn(total_timesteps=200000000)
 
 
 def test(env):
