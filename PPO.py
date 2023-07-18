@@ -1,10 +1,9 @@
-from Network import CNN
-
 import torch
-from torch.distributions import Categorical
-
-from pathlib import Path
 import os
+
+from Network import CNN
+from torch.distributions import Categorical
+from pathlib import Path
 
 import numpy as np
 
@@ -26,8 +25,8 @@ class PPO:
 
     def _init_hyperparameters(self):
         self.timesteps_per_batch = 4800  # timesteps per batch
-        self.max_timesteps_per_episode = 600  # timesteps per episode
-        self.gamma = 0.99
+        self.max_timesteps_per_episode = 1600  # timesteps per episode
+        self.gamma = 0.97
         self.n_updates_per_iteration = 5
         self.clip = 0.2
         self.lr = 0.002
@@ -130,7 +129,6 @@ class PPO:
 
             # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
-            print('a_k', a_k)
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
             # update net n times

@@ -22,7 +22,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'skiing_48000.pt'
+    p = p / 'saved-models' / 'breakout_1523103.pt'
 
     device = torch.device('cpu')
     actor = CNN(out_dims=4)
@@ -45,7 +45,7 @@ def test(env):
         print(reward)
 
 
-mode = 'train'
+mode = 'train' if torch.cuda.is_available() else 'test'
 game = 'ALE/Breakout-v5'
 
 
