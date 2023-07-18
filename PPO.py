@@ -53,7 +53,7 @@ class PPO:
         log_probs = dist.log_prob(batch_acts)
 
         # Return predicted values V and log probs
-        return V, log_probs
+        return V*133, log_probs
 
     def rollout(self):
         batch_obs = []  # batch observations
@@ -130,7 +130,7 @@ class PPO:
             # update net n times
             for _ in range(self.n_updates_per_iteration):
 
-                # calculate clipped loss
+                # calculate clipped loss for actor
                 _, curr_log_probs = self.evaluate(batch_obs, batch_acts)
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
