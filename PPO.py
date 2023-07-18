@@ -24,12 +24,12 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.timesteps_per_batch = 4800  # timesteps per batch
-        self.max_timesteps_per_episode = 1600  # timesteps per episode
-        self.gamma = 0.97
+        self.timesteps_per_batch = 5000  # timesteps per batch
+        self.max_timesteps_per_episode = 4000  # timesteps per episode
+        self.gamma = 0.99
         self.n_updates_per_iteration = 5
         self.clip = 0.2
-        self.lr = 0.002
+        self.lr = 0.0001
 
     def get_action(self, obs):
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
