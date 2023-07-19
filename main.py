@@ -22,7 +22,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'breakout_2962819.pt'
+    p = p / 'saved-models' / 'breakout_8890197.pt'
 
     device = torch.device('cpu')
     actor = CNN(out_dims=4)
@@ -53,12 +53,12 @@ def main():
     # Train or test, depending on the mode specified
     if mode == 'train':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1)
-        env = AtariPreprocessing(env)
-        train(env=env)
+        wrapped_env = AtariPreprocessing(env)
+        train(env=wrapped_env)
     elif mode == 'test':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
-        env = AtariPreprocessing(env)
-        test(env=env)
+        wrapped_env = AtariPreprocessing(env)
+        test(env=wrapped_env)
 
 
 if __name__ == '__main__':
