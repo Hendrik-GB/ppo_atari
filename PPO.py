@@ -32,7 +32,7 @@ class PPO:
         self.lr = 0.00025
 
     def get_action(self, obs):
-        obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
+        obs = torch.unsqueeze(torch.Tensor(np.array(obs)), dim=0)
         obs = torch.unsqueeze(obs, dim=0)
         logits = self.actor(obs.to(device)).cpu()
         dist = Categorical(logits=logits)
