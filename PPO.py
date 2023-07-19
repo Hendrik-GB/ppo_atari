@@ -28,8 +28,8 @@ class PPO:
         self.max_timesteps_per_episode = 4000  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 5
-        self.clip = 0.2
-        self.lr = 0.0001
+        self.clip = 0.1
+        self.lr = 0.00025
 
     def get_action(self, obs):
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
