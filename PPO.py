@@ -13,9 +13,10 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # https://medium.com/analytics-vidhya/coding-ppo-from-scratch-with-pytorch-part-3-4-82081ea58146
 # https://github.com/ericyangyu/PPO-for-Beginners
 class PPO:
-    def __init__(self, env):
+    def __init__(self, env, action_space, game):
         self.env = env
-        self.action_space = 6
+        self.action_space = action_space
+        self.game = game
         self.actor = CNN(out_dims=self.action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
@@ -24,8 +25,8 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.timesteps_per_batch = 500  # timesteps per batch
-        self.max_timesteps_per_episode = 500  # timesteps per episode
+        self.timesteps_per_batch = 1000  # timesteps per batch
+        self.max_timesteps_per_episode = 750  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.clip = 0.1
@@ -158,7 +159,7 @@ class PPO:
             if iteration % 50 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / 'ppo_atari' / ('pong_' + str(t_so_far) + '.pt')
+                p = p / 'saved-models' / 'ppo_atari' / (self.game.split('-')[0].split('/')[-1] + str(t_so_far) + '.pt')
 
                 torch.save({
                     'steps': t_so_far,

@@ -14,7 +14,7 @@ def train(env):
     print(f"Training", flush=True)
 
     # Create a model for PPO
-    model = PPO(env=env)
+    model = PPO(env=env, action_space=action_space, game=game)
     model.learn(total_timesteps=200000000)
 
 
@@ -26,7 +26,7 @@ def test(env):
     p = p / 'saved-models' / 'pong_1109504.pt'
 
     device = torch.device('cpu')
-    actor = CNN(out_dims=6)
+    actor = CNN(out_dims=action_space)
 
     checkpoint = torch.load(p, map_location=device)
     actor.load_state_dict(checkpoint['actor_state_dict'])
@@ -50,6 +50,8 @@ def test(env):
 
 mode = 'train' if torch.cuda.is_available() else 'test'
 game = "ALE/Pong-v5"
+# game = "ALE/Breakout-v5"
+action_space = 6
 
 
 def main():
