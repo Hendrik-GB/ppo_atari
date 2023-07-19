@@ -23,7 +23,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'breakout_1074461.pt'
+    p = p / 'saved-models' / 'breakout_1671727.pt'
 
     device = torch.device('cpu')
     actor = CNN(out_dims=4)
@@ -33,8 +33,10 @@ def test(env):
 
     done = False
     obs, _ = env.reset()
+    timestep = 0
 
     while not done:
+        timestep = timestep + 1
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
         obs = torch.unsqueeze(obs, dim=0)
         logits = actor(obs.to(device)).cpu()
@@ -43,11 +45,11 @@ def test(env):
         # Sample an action from the distribution and get its log prob
         action = dist.sample()
         obs, reward, done, _, _ = env.step(action)
-        print(reward)
+        print('Timestep:', timestep)
 
 
 mode = 'train' if torch.cuda.is_available() else 'test'
-game = 'ALE/Breakout-v5'
+game = "ALE/Pong-v5"
 
 
 def main():

@@ -15,8 +15,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 class PPO:
     def __init__(self, env):
         self.env = env
-        action_space = 4
-        self.actor = CNN(out_dims=action_space).to(device)
+        self.action_space = 6
+        self.actor = CNN(out_dims=self.action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
 
@@ -25,7 +25,7 @@ class PPO:
 
     def _init_hyperparameters(self):
         self.timesteps_per_batch = 2000  # timesteps per batch
-        self.max_timesteps_per_episode = 1000  # timesteps per episode
+        self.max_timesteps_per_episode = 2000  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.clip = 0.1
@@ -125,7 +125,8 @@ class PPO:
             v, _ = self.evaluate(batch_obs, batch_acts)
 
             t_so_far += np.sum(batch_lens)
-            print('Learned Timesteps:', t_so_far, 'With Ratings:', batch_rtgs, 'actions:', batch_acts)
+            print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_rtgs[0],
+                  'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
 
             # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
@@ -154,10 +155,10 @@ class PPO:
                 self.critic_optim.step()
 
             # save model
-            if iteration % 10 == 0:
+            if iteration % 50 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / 'ppo_atari' / ('breakout_' + str(t_so_far) + '.pt')
+                p = p / 'saved-models' / 'ppo_atari' / ('pong_' + str(t_so_far) + '.pt')
 
                 torch.save({
                     'steps': t_so_far,
