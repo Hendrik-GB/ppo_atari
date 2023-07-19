@@ -157,7 +157,7 @@ class PPO:
             if iteration % 10 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / ('breakout_' + str(t_so_far) + '.pt')
+                p = p / 'saved-models' / 'ppo_atari' / ('breakout_' + str(t_so_far) + '.pt')
 
                 torch.save({
                     'steps': t_so_far,
