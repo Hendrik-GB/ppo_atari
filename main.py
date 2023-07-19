@@ -5,6 +5,7 @@ import os
 from PPO import PPO
 from Network import CNN
 from gymnasium.wrappers import AtariPreprocessing
+from gymnasium.wrappers import FrameStack
 from pathlib import Path
 from torch.distributions import Categorical
 
@@ -53,11 +54,13 @@ def main():
     # Train or test, depending on the mode specified
     if mode == 'train':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1)
-        wrapped_env = AtariPreprocessing(env, frame_skip=4)
+        wrapped_env = AtariPreprocessing(env)
+        wrapped_env = FrameStack(wrapped_env, 4)
         train(env=wrapped_env)
     elif mode == 'test':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
-        wrapped_env = AtariPreprocessing(env, frame_skip=4)
+        wrapped_env = AtariPreprocessing(env)
+        wrapped_env = FrameStack(wrapped_env, 4)
         test(env=wrapped_env)
 
 
