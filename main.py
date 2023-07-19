@@ -22,7 +22,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'breakout_8890197.pt'
+    p = p / 'saved-models' / 'breakout_1074461.pt'
 
     device = torch.device('cpu')
     actor = CNN(out_dims=4)
