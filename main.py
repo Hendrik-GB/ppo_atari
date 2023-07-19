@@ -23,10 +23,10 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'breakout_1671727.pt'
+    p = p / 'saved-models' / 'pong_1109504.pt'
 
     device = torch.device('cpu')
-    actor = CNN(out_dims=4)
+    actor = CNN(out_dims=6)
 
     checkpoint = torch.load(p, map_location=device)
     actor.load_state_dict(checkpoint['actor_state_dict'])
