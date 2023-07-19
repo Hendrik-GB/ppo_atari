@@ -25,7 +25,7 @@ class CNN(nn.Module):
         x = self.activation(self.conv1(x))
         x = self.activation(self.conv2(x))
         x = self.activation(self.conv3(x))
-        x = x.reshape((-1, 7 * 7 * 64))
+        x = x.reshape((-1, 7 * 7 * 32))
         x = self.activation(self.lin(x))
 
         return self.ff(x)
