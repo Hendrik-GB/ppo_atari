@@ -26,7 +26,7 @@ class PPO:
 
     def _init_hyperparameters(self):
         self.timesteps_per_batch = 1000  # timesteps per batch
-        self.max_timesteps_per_episode = 750  # timesteps per episode
+        self.max_timesteps_per_episode = 500  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.clip = 0.1
@@ -159,7 +159,8 @@ class PPO:
             if iteration % 50 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / 'ppo_atari' / (self.game.split('-')[0].split('/')[-1] + str(t_so_far) + '.pt')
+                p = p / 'saved-models' / 'ppo_atari' / \
+                    (self.game.split('-')[0].split('/')[-1] + '_' + str(t_so_far) + '.pt')
 
                 torch.save({
                     'steps': t_so_far,
