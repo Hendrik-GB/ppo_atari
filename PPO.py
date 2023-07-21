@@ -47,7 +47,7 @@ class PPO:
     def evaluate(self, batch_obs, batch_acts):
         batch_obs = batch_obs.unsqueeze(dim=1)
 
-        # calculate predicted score woth critic
+        # calculate predicted score with critic
         V = self.critic(batch_obs.to(device)).squeeze().cpu()
 
         # calculate log prob of actions
@@ -59,12 +59,12 @@ class PPO:
         return V, log_probs
 
     def rollout(self):
-        batch_obs = []  # batch observations
-        batch_acts = []  # batch actions
-        batch_log_probs = []  # log probs of each action
-        batch_rewards = []  # batch rewards
-        batch_rtgs = []  # batch rewards-to-go
-        batch_lengths = []  # episodic lengths in batch
+        batch_obs = []
+        batch_acts = []
+        batch_log_probs = []
+        batch_rewards = []
+        batch_rtgs = []
+        batch_lengths = []
 
         t = 0
         while t < self.timesteps_per_batch:
@@ -72,7 +72,6 @@ class PPO:
 
             # generate first observation
             obs, _ = self.env.reset()
-            done = False
 
             for ep_t in range(self.max_timesteps_per_episode):
                 t = t + 1
