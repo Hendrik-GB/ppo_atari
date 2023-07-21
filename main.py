@@ -60,11 +60,10 @@ num_envs = 6
 def main():
     # Train or test, depending on the mode specified
     if mode == 'train':
-        env = gymnasium.vector.AsyncVectorEnv([
-            lambda: AtariPreprocessing(gymnasium.make(game, obs_type="rgb")),
-            lambda: AtariPreprocessing(gymnasium.make(game, obs_type="rgb"))
-        ])
-        train(env=env)
+        env = gymnasium.make(game, obs_type="rgb", frameskip=1)
+        wrapped_env = AtariPreprocessing(env)
+        wrapped_env = FrameStack(wrapped_env, 4)
+        train(env=wrapped_env)
     elif mode == 'test':
         env = gymnasium.make(game, obs_type="rgb", render_mode='human')
         wrapped_env = AtariPreprocessing(env)
