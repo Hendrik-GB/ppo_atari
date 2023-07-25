@@ -23,7 +23,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'Pong_11000000.pt'
+    p = p / 'saved-models' / 'breakout_3488178.pt'
     # Pong_11000000.pt
     # breakout_3488178.pt
 
@@ -51,9 +51,9 @@ def test(env):
 
 
 mode = 'train' if torch.cuda.is_available() else 'test'
-game = "ALE/Pong-v5"
-# game = "ALE/Breakout-v5"
-action_space = 6
+# game = "ALE/Pong-v5"
+game = "ALE/Breakout-v5"
+action_space = 4
 num_envs = 6
 
 
@@ -65,8 +65,9 @@ def main():
         wrapped_env = FrameStack(wrapped_env, 4)
         train(env=wrapped_env)
     elif mode == 'test':
-        env = gymnasium.make(game, obs_type="rgb", render_mode='human')
+        env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
         wrapped_env = AtariPreprocessing(env)
+        wrapped_env = FrameStack(wrapped_env, 4)
         test(env=wrapped_env)
 
 

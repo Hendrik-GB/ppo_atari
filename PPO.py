@@ -20,13 +20,15 @@ class PPO:
         self.actor = CNN(out_dims=self.action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
+        self.done = False
+        self.last_obs = None
 
         self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.timesteps_per_batch = 1000  # timesteps per batch
-        self.max_timesteps_per_episode = 500  # timesteps per episode
+        self.timesteps_per_batch = 1000  # timesteps per batch NOT USED
+        self.max_timesteps_per_episode = 100  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.clip = 0.1
@@ -65,33 +67,26 @@ class PPO:
         batch_rewards = []
         batch_rtgs = []
         batch_lengths = []
+        ep_rewards = []
 
-        t = 0
-        while t < self.timesteps_per_batch:
-            ep_rewards = []
+        for ep_t in range(self.max_timesteps_per_episode):
+            if self.done:
+                obs, _ = self.env.reset()
+            else:
+                obs = self.last_obs
 
-            # generate first observation
-            obs, _ = self.env.reset()
+            # generate action and next observation
+            action, log_prob = self.get_action(obs)
+            # print('action:', action)
+            obs, reward, done, _, _ = self.env.step(action)
 
-            for ep_t in range(self.max_timesteps_per_episode):
-                t = t + 1
+            batch_acts.append(action)
+            batch_log_probs.append(log_prob)
+            ep_rewards.append(reward)
 
-                batch_obs.append(obs)
-
-                # generate action and next observation
-                action, log_prob = self.get_action(obs)
-                # print('action:', action)
-                obs, reward, done, _, _ = self.env.step(action)
-
-                batch_acts.append(action)
-                batch_log_probs.append(log_prob)
-                ep_rewards.append(reward)
-
-                if done:
-                    break
-
-            batch_lengths.append(ep_t + 1)
-            batch_rewards.append(ep_rewards)
+        batch_lengths.append(ep_t + 1)
+        batch_rewards.append(ep_rewards)
+        self.last_obs = obs
 
         batch_obs = torch.tensor(np.asarray(batch_obs), dtype=torch.float)
         batch_acts = torch.tensor(np.asarray(batch_acts), dtype=torch.float)
