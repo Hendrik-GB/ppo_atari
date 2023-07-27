@@ -20,7 +20,7 @@ class PPO:
         self.actor = CNN(out_dims=self.action_space).to(device)
         self.critic = CNN(out_dims=1).to(device)
         self._init_hyperparameters()
-        self.done = False
+        self.done = True
         self.last_obs = None
 
         self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
@@ -69,16 +69,22 @@ class PPO:
         batch_lengths = []
         ep_rewards = []
 
+        obs = self.last_obs
+
         for ep_t in range(self.max_timesteps_per_episode):
             if self.done:
                 obs, _ = self.env.reset()
-            else:
-                obs = self.last_obs
+                self.done = False
+
+            batch_obs.append(obs)
 
             # generate action and next observation
             action, log_prob = self.get_action(obs)
             # print('action:', action)
             obs, reward, done, _, _ = self.env.step(action)
+
+            if done:
+                self.done = True
 
             batch_acts.append(action)
             batch_log_probs.append(log_prob)
