@@ -126,8 +126,10 @@ class PPO:
             v, _ = self.evaluate(batch_obs, batch_acts)
 
             t_so_far += np.sum(batch_lens)
-            print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_rtgs[0],
-                  'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
+
+            if t_so_far % 1000 == 0:
+                print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_rtgs[0],
+                      'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
 
             # calculate advantage estimates
             a_k = batch_rtgs - v.detach()
