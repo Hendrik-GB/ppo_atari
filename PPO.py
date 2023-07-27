@@ -127,7 +127,7 @@ class PPO:
 
             t_so_far += np.sum(batch_lens)
 
-            if t_so_far % 1000 == 0:
+            if t_so_far % 5000 == 0:
                 print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_rtgs[0],
                       'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
 
@@ -158,7 +158,7 @@ class PPO:
                 self.critic_optim.step()
 
             # save model
-            if iteration % 50 == 0:
+            if iteration % 500 == 0:
                 # path to data folder
                 p = Path(os.getcwd()).parent.absolute()
                 p = p / 'saved-models' / 'ppo_atari' / \
