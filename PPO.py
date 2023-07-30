@@ -27,11 +27,10 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.timesteps_per_batch = 1000  # timesteps per batch NOT USED
         self.max_timesteps_per_episode = 250  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
-        self.clip = 0.1
+        self.clip = 0.2
         self.lr = 0.00025
 
     def get_action(self, obs):
