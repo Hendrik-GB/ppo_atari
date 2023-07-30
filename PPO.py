@@ -29,7 +29,7 @@ class PPO:
     def _init_hyperparameters(self):
         self.rollout_steps = 100  # timesteps per episode
         self.gamma = 0.99
-        self.n_updates_per_iteration = 8
+        self.n_updates_per_iteration = 4
         self.clip = 0.2
         self.lr = 0.00025
 
