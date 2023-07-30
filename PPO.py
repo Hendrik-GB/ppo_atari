@@ -52,6 +52,12 @@ class PPO:
 
         # calculate log prob of actions
         logits = self.actor(batch_obs.to(device)).cpu()
+
+        if torch.sum(torch.isnan(logits)) != 0:
+            print('Nan detected')
+            print(batch_obs.shape, batch_acts.shape)
+            print(batch_obs, batch_acts)
+
         dist = Categorical(logits=logits)
         log_probs = dist.log_prob(batch_acts)
 
@@ -71,7 +77,6 @@ class PPO:
             self.done = False
 
         for ep_t in range(self.rollout_steps):
-
             batch_obs.append(obs)
 
             # generate action and next observation
