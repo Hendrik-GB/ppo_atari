@@ -53,7 +53,7 @@ class PPO:
         # calculate log prob of actions
         logits = self.actor(batch_obs.to(device)).cpu()
 
-        if torch.sum(torch.isnan(logits)) != 0 or True:
+        if torch.sum(torch.isnan(logits)) != 0:
             print('Nan detected')
             print(batch_obs.shape, batch_acts.shape)
             print(batch_obs, batch_acts)
