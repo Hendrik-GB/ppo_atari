@@ -122,7 +122,7 @@ class PPO:
 
             t_so_far += batch_length
 
-            if t_so_far % 5000 == 0:
+            if iteration % 5 == 0:
                 print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_ratings[0],
                       'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
 
