@@ -27,9 +27,9 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.rollout_steps = 250  # timesteps per episode
+        self.rollout_steps = 100  # timesteps per episode
         self.gamma = 0.99
-        self.n_updates_per_iteration = 20
+        self.n_updates_per_iteration = 8
         self.clip = 0.2
         self.lr = 0.00025
 
@@ -53,7 +53,7 @@ class PPO:
         # calculate log prob of actions
         logits = self.actor(batch_obs.to(device)).cpu()
 
-        if torch.sum(torch.isnan(logits)) != 0:
+        if torch.sum(torch.isnan(logits)) != 0 or True:
             print('Nan detected')
             print(batch_obs.shape, batch_acts.shape)
             print(batch_obs, batch_acts)

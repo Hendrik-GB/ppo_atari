@@ -40,7 +40,6 @@ def test(env):
     while not done:
         timestep = timestep + 1
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
-        obs = torch.unsqueeze(obs, dim=0)
         logits = actor(obs.to(device)).cpu()
         dist = Categorical(logits=logits)
 
@@ -50,8 +49,8 @@ def test(env):
         print('Timestep:', timestep)
 
 
-# mode = 'train' if torch.cuda.is_available() else 'test'
-mode = 'train'
+mode = 'train' if torch.cuda.is_available() else 'test'
+# mode = 'train'
 # game = "ALE/Pong-v5"
 game = "ALE/Breakout-v5"
 action_space = 4
