@@ -27,15 +27,14 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.max_timesteps_per_episode = 250  # timesteps per episode
+        self.rollout_steps = 250  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.clip = 0.2
         self.lr = 0.00025
 
     def get_action(self, obs):
-        obs = torch.unsqueeze(torch.Tensor(np.array(obs)), dim=0)
-        obs = torch.unsqueeze(obs, dim=0)
+        obs = torch.Tensor(np.array(obs))
         logits = self.actor(obs.to(device)).cpu()
         dist = Categorical(logits=logits)
 
@@ -46,7 +45,7 @@ class PPO:
 
     # calculate predicted score and probability of actions
     def evaluate(self, batch_obs, batch_acts):
-        batch_obs = batch_obs.unsqueeze(dim=1)
+        # print('evaluate', batch_obs.shape, batch_acts.shape)
 
         # calculate predicted score with critic
         V = self.critic(batch_obs.to(device)).squeeze().cpu()
@@ -63,8 +62,6 @@ class PPO:
         batch_obs = []
         batch_acts = []
         batch_log_probs = []
-        batch_rewards = []
-        batch_lengths = []
         ep_rewards = []
 
         obs = self.last_obs
@@ -73,26 +70,24 @@ class PPO:
             obs, _ = self.env.reset()
             self.done = False
 
-        for ep_t in range(self.max_timesteps_per_episode):
-            if self.done:
-                break
+        for ep_t in range(self.rollout_steps):
 
             batch_obs.append(obs)
 
             # generate action and next observation
             action, log_prob = self.get_action(obs)
-            # print('action:', action)
             obs, reward, done, _, _ = self.env.step(action)
-
-            if done:
-                self.done = True
 
             batch_acts.append(action)
             batch_log_probs.append(log_prob)
             ep_rewards.append(reward)
 
-        batch_lengths.append(ep_t + 1)
-        batch_rewards.append(ep_rewards)
+            if done:
+                self.done = True
+                break
+
+        batch_length = ep_t + 1
+        batch_rewards = ep_rewards
 
         self.last_obs = obs
 
@@ -100,22 +95,20 @@ class PPO:
         batch_acts = torch.tensor(np.asarray(batch_acts), dtype=torch.float)
         batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float)
         batch_rtgs = self.compute_rtgs(batch_rewards)  # Return the batch data
-        return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lengths
+        return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_length
 
     # calculate ratings for given batch
-    def compute_rtgs(self, batch_rews):
-        batch_rtgs = []
+    def compute_rtgs(self, rewards):
+        ratings = []
+        discounted_reward = 0
 
-        for ep_rews in reversed(batch_rews):
-            discounted_reward = 0
+        # Iterate through all rewards in the episode. We go backwards for smoother calculation of each discounted return
+        for rew in reversed(rewards):
+            discounted_reward = rew + discounted_reward * self.gamma
+            ratings.insert(0, discounted_reward)
 
-            # Iterate through all rewards in the episode. We go backwards for smoother calculation of each discounted return
-            for rew in reversed(ep_rews):
-                discounted_reward = rew + discounted_reward * self.gamma
-                batch_rtgs.insert(0, discounted_reward)
-
-        batch_rtgs = torch.tensor(batch_rtgs, dtype=torch.float)
-        return batch_rtgs
+        ratings = torch.tensor(ratings, dtype=torch.float)
+        return ratings
 
     # main learning method
     def learn(self, total_timesteps):
@@ -124,17 +117,17 @@ class PPO:
 
         while t_so_far < total_timesteps:
             iteration = iteration + 1
-            batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens = self.rollout()
+            batch_obs, batch_acts, batch_log_probs, batch_ratings, batch_length = self.rollout()
             v, _ = self.evaluate(batch_obs, batch_acts)
 
-            t_so_far += np.sum(batch_lens)
+            t_so_far += batch_length
 
             if t_so_far % 5000 == 0:
-                print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_rtgs[0],
+                print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_ratings[0],
                       'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space))[0])
 
             # calculate advantage estimates
-            a_k = batch_rtgs - v.detach()
+            a_k = batch_ratings - v.detach()
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
             # update net n times
@@ -154,7 +147,7 @@ class PPO:
                 self.actor_optim.step()
 
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
-                critic_loss = torch.nn.MSELoss()(V, batch_rtgs)
+                critic_loss = torch.nn.MSELoss()(V, batch_ratings)
                 self.critic_optim.zero_grad()
                 critic_loss.backward()
                 self.critic_optim.step()

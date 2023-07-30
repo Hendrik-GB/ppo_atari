@@ -22,7 +22,6 @@ class CNN(nn.Module):
 
     def forward(self, x):
         x = x / 255.0
-        x = x.squeeze(dim=1)
         x = self.activation(self.conv1(x))
         x = self.activation(self.conv2(x))
         x = self.activation(self.conv3(x))
