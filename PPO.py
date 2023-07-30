@@ -65,16 +65,18 @@ class PPO:
         batch_acts = []
         batch_log_probs = []
         batch_rewards = []
-        batch_rtgs = []
         batch_lengths = []
         ep_rewards = []
 
         obs = self.last_obs
 
+        if self.done:
+            obs, _ = self.env.reset()
+            self.done = False
+
         for ep_t in range(self.max_timesteps_per_episode):
             if self.done:
-                obs, _ = self.env.reset()
-                self.done = False
+                break
 
             batch_obs.append(obs)
 
@@ -92,6 +94,7 @@ class PPO:
 
         batch_lengths.append(ep_t + 1)
         batch_rewards.append(ep_rewards)
+
         self.last_obs = obs
 
         batch_obs = torch.tensor(np.asarray(batch_obs), dtype=torch.float)
