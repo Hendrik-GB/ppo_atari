@@ -29,9 +29,9 @@ class PPO:
     def _init_hyperparameters(self):
         self.rollout_steps = 200  # timesteps per episode
         self.gamma = 0.99
-        self.n_updates_per_iteration = 20
+        self.n_updates_per_iteration = 10
         self.ppo_clip = 0.2
-        self.lr = 0.0002
+        self.lr = 0.0001
         self.gradient_clip = 0.25
 
     def get_action(self, obs):
