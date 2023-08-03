@@ -21,6 +21,7 @@ class CNN(nn.Module):
         self.activation = nn.ReLU()
 
     def forward(self, x):
+        x = x.unsqueeze(dim=1)
         x = x / 255.0
         x = self.activation(self.conv1(x))
         x = self.activation(self.conv2(x))
