@@ -27,14 +27,15 @@ class PPO:
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
-        self.rollout_steps = 200  # timesteps per episode
+        self.rollout_steps = 100  # timesteps per episode
         self.gamma = 0.99
-        self.n_updates_per_iteration = 50
+        self.n_updates_per_iteration = 20
         self.clip = 0.2
         self.lr = 0.00025
 
     def get_action(self, obs):
         obs = torch.Tensor(np.array(obs))
+        obs = obs.unsqueeze(dim=0)
         logits = self.actor(obs.to(device)).cpu()
         dist = Categorical(logits=logits)
 
