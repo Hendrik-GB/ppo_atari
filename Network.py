@@ -25,8 +25,7 @@ class CNN(nn.Module):
 
         self.lin = nn.Linear(in_features=2 * 2 * 64, out_features=128)
         self.ff = nn.Linear(128, out_dims)
-        self.activation = nn.Tanh()
-        self.final_activation = nn.ReLU()
+        self.activation = nn.ReLU()
 
     def forward(self, x):
         # unsqeeze without framestack
@@ -38,5 +37,5 @@ class CNN(nn.Module):
         x = x.reshape((-1, 2 * 2 * 64))
         x = self.activation(self.lin(x))
 
-        return self.final_activation(self.ff(x))
+        return self.activation(self.ff(x))
 

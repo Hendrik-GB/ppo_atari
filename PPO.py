@@ -30,7 +30,7 @@ class PPO:
         self.rollout_steps = 200  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 10
-        self.ppo_clip = 0.2
+        self.ppo_clip = 0.1
         self.lr = 0.0002
         self.gradient_clip = 0.25
 
@@ -152,13 +152,14 @@ class PPO:
                 self.actor_optim.zero_grad()
                 actor_loss.backward(retain_graph=True)
 
-                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
                 self.actor_optim.step()
 
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
                 critic_loss = torch.nn.MSELoss()(V, batch_ratings)
                 self.critic_optim.zero_grad()
                 critic_loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.critic.parameters(), self.gradient_clip)
                 self.critic_optim.step()
 
             # save model
