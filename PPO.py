@@ -31,7 +31,7 @@ class PPO:
         self.gamma = 0.99
         self.n_updates_per_iteration = 10
         self.ppo_clip = 0.2
-        self.lr = 0.0001
+        self.lr = 0.0002
         self.gradient_clip = 0.25
 
     def get_action(self, obs):
@@ -152,7 +152,7 @@ class PPO:
                 self.actor_optim.zero_grad()
                 actor_loss.backward(retain_graph=True)
 
-                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
+                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
                 self.actor_optim.step()
 
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
