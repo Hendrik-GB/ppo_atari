@@ -49,8 +49,8 @@ def test(env):
         print('Timestep:', timestep)
 
 
-mode = 'train' if torch.cuda.is_available() else 'test'
-# mode = 'train'
+# mode = 'train' if torch.cuda.is_available() else 'test'
+mode = 'train'
 # game = "ALE/Pong-v5"
 game = "ALE/Breakout-v5"
 action_space = 4
