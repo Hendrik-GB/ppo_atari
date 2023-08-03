@@ -31,7 +31,7 @@ class CNN(nn.Module):
         # unsqeeze without framestack
         x = x.unsqueeze(dim=-3)
         x = x / 255.0
-        print(torch.min(self.conv1.weight.data), torch.max(self.conv1.weight.data))
+        # print(torch.min(self.conv1.weight.data), torch.max(self.conv1.weight.data))
         # print(torch.min(x), torch.max(x), 'in')
         x = self.conv1(x)
         # print(torch.min(x), torch.max(x))
