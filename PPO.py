@@ -57,7 +57,6 @@ class PPO:
             print('Nan detected')
             print(batch_obs.shape, batch_acts.shape)
             print(batch_obs, batch_acts)
-            print(torch.sum(torch.isnan(batch_obs)))
 
         dist = Categorical(logits=logits)
         log_probs = dist.log_prob(batch_acts)
