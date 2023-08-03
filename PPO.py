@@ -55,6 +55,7 @@ class PPO:
 
         if torch.sum(torch.isnan(logits)) != 0:
             print('Nan detected')
+            # obs with len 4, acts with len 1???
             print(batch_obs.shape, batch_acts.shape)
             print(batch_obs, batch_acts)
 

@@ -62,12 +62,12 @@ def main():
     if mode == 'train':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1)
         wrapped_env = AtariPreprocessing(env)
-        wrapped_env = FrameStack(wrapped_env, 4)
+        # wrapped_env = FrameStack(wrapped_env, 4)
         train(env=wrapped_env)
     elif mode == 'test':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
         wrapped_env = AtariPreprocessing(env)
-        wrapped_env = FrameStack(wrapped_env, 4)
+        # wrapped_env = FrameStack(wrapped_env, 4)
         test(env=wrapped_env)
 
 
