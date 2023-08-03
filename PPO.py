@@ -23,15 +23,16 @@ class PPO:
         self.done = True
         self.last_obs = None
 
-        self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=0.1)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
     def _init_hyperparameters(self):
         self.rollout_steps = 500  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 10
-        self.clip = 0.2
+        self.ppo_clip = 0.2
         self.lr = 0.0001
+        self.gradient_clip = 0.25
 
     def get_action(self, obs):
         obs = torch.Tensor(np.array(obs))
@@ -144,12 +145,14 @@ class PPO:
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
                 surr1 = ratios * a_k
-                surr2 = torch.clamp(ratios, 1 - self.clip, 1 + self.clip) * a_k
+                surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
                 actor_loss = (-torch.min(surr1, surr2)).mean()
 
                 # optimize nets
                 self.actor_optim.zero_grad()
                 actor_loss.backward(retain_graph=True)
+
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
                 self.actor_optim.step()
 
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
