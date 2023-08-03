@@ -31,11 +31,24 @@ class CNN(nn.Module):
         # unsqeeze without framestack
         x = x.unsqueeze(dim=-3)
         x = x / 255.0
-        x = self.pool1(self.norm1(self.conv1(x)))
+        print(torch.min(self.conv1.weight.data), torch.max(self.conv1.weight.data))
+        # print(torch.min(x), torch.max(x), 'in')
+        x = self.conv1(x)
+        # print(torch.min(x), torch.max(x))
+        x = self.norm1(x)
+        # print(torch.min(x), torch.max(x))
+        x = self.pool1(x)
+        # print(torch.min(x), torch.max(x))
         x = self.pool2(self.norm2(self.conv2(x)))
+        # print(torch.min(x), torch.max(x))
         x = self.pool3(self.norm3(self.conv3(x)))
+        # print(torch.min(x), torch.max(x))
         x = x.reshape((-1, 2 * 2 * 64))
+        # print(torch.min(x), torch.max(x))
         x = self.activation(self.lin(x))
+        # print(torch.min(x), torch.max(x))
+        x = self.activation(self.ff(x))
+        # print(torch.min(x), torch.max(x))
 
-        return self.activation(self.ff(x))
+        return x
 

@@ -23,7 +23,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'Breakout_199006.pt'
+    p = p / 'saved-models' / 'Breakout_nan.pt'
     # Pong_11000000.pt
     # breakout_3488178.pt
 
