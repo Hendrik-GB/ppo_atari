@@ -49,8 +49,8 @@ def test(env):
         print('Timestep:', timestep)
 
 
-# mode = 'train' if torch.cuda.is_available() else 'test'
-mode = 'train'
+mode = 'train' if torch.cuda.is_available() else 'test'
+# mode = 'train'
 # game = "ALE/Pong-v5"
 game = "ALE/Breakout-v5"
 action_space = 4
@@ -67,7 +67,7 @@ def main():
     elif mode == 'test':
         env = gymnasium.make(game, obs_type="rgb", frameskip=1, render_mode='human')
         wrapped_env = AtariPreprocessing(env)
-        # wrapped_env = FrameStack(wrapped_env, 4)
+        wrapped_env = FrameStack(wrapped_env, 4)
         test(env=wrapped_env)
 
 
