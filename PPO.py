@@ -60,6 +60,19 @@ class PPO:
             print(batch_obs.shape, batch_acts.shape)
             print(batch_obs, batch_acts)
 
+            p = Path(os.getcwd()).parent.absolute()
+            p = p / 'saved-models' / 'ppo_atari' / \
+                (self.game.split('-')[0].split('/')[-1] + '_nan.pt')
+
+            torch.save({
+                'steps': -1,
+                'actor_state_dict': self.actor.state_dict(),
+                'critic_state_dict': self.critic.state_dict(),
+                'actor_optimizer_state_dict': self.actor_optim.state_dict(),
+                'critic_optimizer_state_dict': self.critic_optim.state_dict(),
+            }, p)
+            print('Saved model at nan time steps')
+
         dist = Categorical(logits=logits)
         log_probs = dist.log_prob(batch_acts)
 
