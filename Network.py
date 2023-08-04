@@ -22,13 +22,25 @@ class CNN(nn.Module):
         self.conv3 = layer_init(nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3))
         self.norm3 = nn.BatchNorm2d(64)
         self.pool3 = nn.MaxPool2d(kernel_size=3)
-
         self.lin = nn.Linear(in_features=2 * 2 * 64, out_features=128)
-        self.ff = nn.Linear(128, out_dims)
+
+        self.actor = nn.Linear(128, out_dims)
+        self.critic = nn.Linear(128, 1)
         self.activation = nn.ReLU()
 
+    def action_only(self, x):
+        x = self.forward(x)
+        x = self.activation(self.actor(x))
+        return x
+
+    def action_score(self, x):
+        x = self.forward(x)
+        action = self.activation(self.actor(x))
+        score = self.activation(self.critic(x))
+        return action, score.squeeze()
+
     def forward(self, x):
-        # unsqeeze without framestack
+        # unsqueeze without framestack
         x = x.unsqueeze(dim=-3)
         x = x / 255.0
         # print(torch.min(self.conv1.weight.data), torch.max(self.conv1.weight.data))
@@ -47,8 +59,5 @@ class CNN(nn.Module):
         # print(torch.min(x), torch.max(x))
         x = self.activation(self.lin(x))
         # print(torch.min(x), torch.max(x))
-        x = self.activation(self.ff(x))
-        # print(torch.min(x), torch.max(x))
-
         return x
 

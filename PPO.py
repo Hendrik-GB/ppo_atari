@@ -17,14 +17,12 @@ class PPO:
         self.env = env
         self.action_space = action_space
         self.game = game
-        self.actor = CNN(out_dims=self.action_space).to(device)
-        self.critic = CNN(out_dims=1).to(device)
+        self.network = CNN(out_dims=self.action_space).to(device)
         self._init_hyperparameters()
         self.done = True
         self.last_obs = None
 
-        self.actor_optim = torch.optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=0.1)
-        self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr, weight_decay=0.1)
 
     def _init_hyperparameters(self):
         self.rollout_steps = 200  # timesteps per episode
@@ -33,27 +31,27 @@ class PPO:
         self.ppo_clip = 0.3
         self.lr = 0.0002
         self.gradient_clip = 1
+        self.critic_coefficient = 0.5
 
     def get_action(self, obs):
-        obs = torch.Tensor(np.array(obs))
-        obs = obs.unsqueeze(dim=0)
-        logits = self.actor(obs.to(device)).cpu()
-        dist = Categorical(logits=logits)
+        with torch.no_grad():
+            obs = torch.Tensor(np.array(obs))
+            obs = obs.unsqueeze(dim=0)
+            logits = self.network.action_only(obs.to(device)).cpu()
+            dist = Categorical(logits=logits)
 
-        # Sample an action from the distribution and get its log prob
-        action = dist.sample()
-        log_prob = dist.log_prob(action)
-        return action.detach()[0], log_prob.detach()
+            # Sample an action from the distribution and get its log prob
+            action = dist.sample()
+            log_prob = dist.log_prob(action)
+            return action[0], log_prob
 
     # calculate predicted score and probability of actions
     def evaluate(self, batch_obs, batch_acts):
         # print('evaluate', batch_obs.shape, batch_acts.shape)
 
-        # calculate predicted score with critic
-        V = self.critic(batch_obs.to(device)).squeeze().cpu()
-
-        # calculate log prob of actions
-        logits = self.actor(batch_obs.to(device)).cpu()
+        # calculate predicted score and log probs
+        logits, V = self.network.action_score(batch_obs.to(device))
+        V, logits = V.cpu(), logits.cpu()
 
         if torch.sum(torch.isnan(logits)) != 0:
             print('Nan detected')
@@ -66,10 +64,8 @@ class PPO:
 
             torch.save({
                 'steps': -1,
-                'actor_state_dict': self.actor.state_dict(),
-                'critic_state_dict': self.critic.state_dict(),
-                'actor_optimizer_state_dict': self.actor_optim.state_dict(),
-                'critic_optimizer_state_dict': self.critic_optim.state_dict(),
+                'network': self.network.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
             }, p)
             print('Saved model at nan time steps')
 
@@ -138,7 +134,9 @@ class PPO:
         while t_so_far < total_timesteps:
             iteration = iteration + 1
             batch_obs, batch_acts, batch_log_probs, batch_ratings, batch_length = self.rollout()
-            v, _ = self.evaluate(batch_obs, batch_acts)
+
+            with torch.no_grad():
+                V, _ = self.evaluate(batch_obs, batch_acts)
 
             t_so_far += batch_length
 
@@ -147,34 +145,29 @@ class PPO:
                       'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space+1))[0])
 
             # calculate advantage estimates
-            a_k = batch_ratings - v.detach()
+            a_k = batch_ratings - V
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
             # update net n times
             for _ in range(self.n_updates_per_iteration):
 
                 # calculate clipped loss for actor
-                _, curr_log_probs = self.evaluate(batch_obs, batch_acts)
+                V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
                 surr1 = ratios * a_k
                 surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
                 actor_loss = (-torch.min(surr1, surr2)).mean()
 
+                critic_loss = ((V - batch_ratings) ** 2).mean()
+
+                loss = actor_loss + self.critic_coefficient * critic_loss
+
                 # optimize nets
-                self.actor_optim.zero_grad()
-                actor_loss.backward(retain_graph=True)
-
+                self.optimizer.zero_grad()
+                loss.backward()
                 # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
-                self.actor_optim.step()
-
-                V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
-                critic_loss = torch.nn.MSELoss()(V, batch_ratings)
-                print(actor_loss, critic_loss)
-                self.critic_optim.zero_grad()
-                critic_loss.backward()
-                # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), self.gradient_clip)
-                self.critic_optim.step()
+                self.optimizer.step()
 
             # save model
             if iteration % 500 == 0:
@@ -185,9 +178,7 @@ class PPO:
 
                 torch.save({
                     'steps': t_so_far,
-                    'actor_state_dict': self.actor.state_dict(),
-                    'critic_state_dict': self.critic.state_dict(),
-                    'actor_optimizer_state_dict': self.actor_optim.state_dict(),
-                    'critic_optimizer_state_dict': self.critic_optim.state_dict(),
+                    'network': self.network.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
                 }, p)
                 print('Saved model at', t_so_far, 'time steps')
