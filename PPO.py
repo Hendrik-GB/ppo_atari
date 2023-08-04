@@ -153,6 +153,7 @@ class PPO:
 
                 # calculate clipped loss for actor
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
+                print(torch.min(curr_log_probs - batch_log_probs), torch.max(curr_log_probs - batch_log_probs))
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
                 surr1 = ratios * a_k
