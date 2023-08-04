@@ -4,7 +4,7 @@ import numpy as np
 
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
-    torch.nn.init.kaiming_normal_(layer.weight, std)
+    torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
@@ -13,32 +13,30 @@ class CNN(nn.Module):
 
     def __init__(self, out_dims):
         super().__init__()
-        self.conv1 = layer_init(nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3))
-        self.norm1 = nn.BatchNorm2d(16)
-        self.pool1 = nn.MaxPool2d(kernel_size=3)
-        self.conv2 = layer_init(nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3))
-        self.norm2 = nn.BatchNorm2d(32)
-        self.pool2 = nn.MaxPool2d(kernel_size=3)
-        self.conv3 = layer_init(nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3))
-        self.norm3 = nn.BatchNorm2d(64)
-        self.pool3 = nn.MaxPool2d(kernel_size=3)
-        self.lin = nn.Linear(in_features=2 * 2 * 64, out_features=128)
+        self.network = nn.Sequential(
+            layer_init(nn.Conv2d(4, 32, 8, stride=4)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(32, 64, 4, stride=2)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, 3, stride=1)),
+            nn.ReLU(),
+            nn.Flatten(),
+            layer_init(nn.Linear(64 * 7 * 7, 512)),
+            nn.ReLU(),
+        )
 
-        self.actor = nn.Linear(128, out_dims)
-        self.critic = nn.Linear(128, 1)
-
-        self.actor_activation = nn.Sigmoid()
-        self.activation = nn.Tanh()
+        self.actor = layer_init(nn.Linear(512, out_dims), std=0.01)
+        self.critic = layer_init(nn.Linear(512, 1), std=1)
 
     def action_only(self, x):
-        x = self.forward(x)
+        x = self.network(x)
         x = self.actor_activation(self.actor(x))
         return x
 
     def action_score(self, x):
-        x = self.forward(x)
-        action = self.actor_activation(self.actor(x))
-        score = self.activation(self.critic(x))
+        x = self.network(x)
+        action = self.actor(x)
+        score = self.critic(x)
         return action, score.squeeze()
 
     def forward(self, x):

@@ -23,7 +23,7 @@ def test(env):
 
     # path to saved model
     p = Path(os.getcwd()).parent.absolute()
-    p = p / 'saved-models' / 'Breakout_nan.pt'
+    p = p / 'saved-models' / 'Breakout_755154.pt'
     # Pong_11000000.pt
     # breakout_3488178.pt
 
@@ -49,8 +49,8 @@ def test(env):
         print('Timestep:', timestep)
 
 
-# mode = 'train' if torch.cuda.is_available() else 'test'
-mode = 'train'
+mode = 'train' if torch.cuda.is_available() else 'test'
+# mode = 'train'
 # game = "ALE/Pong-v5"
 game = "ALE/Breakout-v5"
 action_space = 4
