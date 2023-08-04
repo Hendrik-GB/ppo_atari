@@ -25,12 +25,11 @@ class PPO:
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr, weight_decay=0.1)
 
     def _init_hyperparameters(self):
-        self.rollout_steps = 200  # timesteps per episode
+        self.rollout_steps = 800  # timesteps per episode
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
-        self.ppo_clip = 0.2
-        self.lr = 0.0025
-        self.gradient_clip = -1
+        self.ppo_clip = 0.1
+        self.lr = 0.00025
         self.critic_coefficient = 0.5
 
     def get_action(self, obs):
@@ -146,8 +145,7 @@ class PPO:
 
             # calculate advantage estimates
             a_k = batch_ratings - V
-            a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
-            print(a_k.std(), a_k.std() + 1e-10, torch.min(batch_ratings), torch.max(batch_ratings), torch.min(V), torch.max(V))
+            a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-8)
 
             # update net n times
             # with torch.autograd.detect_anomaly():
