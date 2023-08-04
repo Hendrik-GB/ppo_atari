@@ -156,6 +156,7 @@ class PPO:
                     V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
                     ratios = torch.exp(curr_log_probs - batch_log_probs)
 
+                    print(torch.min(ratios), torch.max(ratios), torch.min(a_k), torch.max(a_k))
                     surr1 = ratios * a_k
                     surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
                     actor_loss = (-torch.min(surr1, surr2)).mean()
