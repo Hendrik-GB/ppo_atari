@@ -28,6 +28,8 @@ class CNN(nn.Module):
         self.critic = nn.Linear(128, 1)
         self.activation = nn.ReLU()
 
+        self.last_x = None
+
     def action_only(self, x):
         x = self.forward(x)
         x = self.activation(self.actor(x))
@@ -40,6 +42,11 @@ class CNN(nn.Module):
         return action, score.squeeze()
 
     def forward(self, x):
+        self.last_x = x
+
+        if torch.isnan(torch.min(self.conv1.weight.data)):
+            print(self.last_x)
+
         # unsqueeze without framestack
         x = x.unsqueeze(dim=-3)
         x = x / 255.0

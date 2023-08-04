@@ -28,10 +28,10 @@ def test(env):
     # breakout_3488178.pt
 
     device = torch.device('cpu')
-    actor = CNN(out_dims=action_space)
+    network = CNN(out_dims=action_space)
 
     checkpoint = torch.load(p, map_location=device)
-    actor.load_state_dict(checkpoint['actor_state_dict'])
+    network.load_state_dict(checkpoint['network'])
 
     done = False
     obs, _ = env.reset()
@@ -40,7 +40,7 @@ def test(env):
     while not done:
         timestep = timestep + 1
         obs = torch.unsqueeze(torch.Tensor(obs), dim=0)
-        logits = actor(obs.to(device)).cpu()
+        logits = network.action_only(obs.to(device)).cpu()
         dist = Categorical(logits=logits)
 
         # Sample an action from the distribution and get its log prob
@@ -49,8 +49,8 @@ def test(env):
         print('Timestep:', timestep)
 
 
-# mode = 'train' if torch.cuda.is_available() else 'test'
-mode = 'train'
+mode = 'train' if torch.cuda.is_available() else 'test'
+# mode = 'train'
 # game = "ALE/Pong-v5"
 game = "ALE/Breakout-v5"
 action_space = 4
