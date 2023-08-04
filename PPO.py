@@ -170,16 +170,16 @@ class PPO:
                 # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
                 self.optimizer.step()
 
-        # save model
-        if iteration % 500 == 0:
-            # path to data folder
-            p = Path(os.getcwd()).parent.absolute()
-            p = p / 'saved-models' / 'ppo_atari' / \
-                (self.game.split('-')[0].split('/')[-1] + '_' + str(t_so_far) + '.pt')
+            # save model
+            if iteration % 500 == 0:
+                # path to data folder
+                p = Path(os.getcwd()).parent.absolute()
+                p = p / 'saved-models' / 'ppo_atari' / \
+                    (self.game.split('-')[0].split('/')[-1] + '_' + str(t_so_far) + '.pt')
 
-            torch.save({
-                'steps': t_so_far,
-                'network': self.network.state_dict(),
-                'optimizer': self.optimizer.state_dict(),
-            }, p)
-            print('Saved model at', t_so_far, 'time steps')
+                torch.save({
+                    'steps': t_so_far,
+                    'network': self.network.state_dict(),
+                    'optimizer': self.optimizer.state_dict(),
+                }, p)
+                print('Saved model at', t_so_far, 'time steps')
