@@ -144,6 +144,8 @@ class PPO:
                       'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space + 1))[0])
 
             # calculate advantage estimates
+            # hier wurzel des nan problems -> wenn keine rewards in batch sind und V konstant dann a_k = nan und fehler
+            # in backwards pass -> nan in conv2d filter
             a_k = batch_ratings - V
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-8)
 
