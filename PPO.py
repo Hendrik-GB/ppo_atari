@@ -149,26 +149,26 @@ class PPO:
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
 
             # update net n times
-            for _ in range(self.n_updates_per_iteration):
+            with torch.autograd.detect_anomaly():
+                for _ in range(self.n_updates_per_iteration):
 
-                # calculate clipped loss for actor
-                V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
-                print(torch.min(curr_log_probs - batch_log_probs), torch.max(curr_log_probs - batch_log_probs))
-                ratios = torch.exp(curr_log_probs - batch_log_probs)
+                    # calculate clipped loss for actor
+                    V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
+                    ratios = torch.exp(curr_log_probs - batch_log_probs)
 
-                surr1 = ratios * a_k
-                surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
-                actor_loss = (-torch.min(surr1, surr2)).mean()
+                    surr1 = ratios * a_k
+                    surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
+                    actor_loss = (-torch.min(surr1, surr2)).mean()
 
-                critic_loss = ((V - batch_ratings) ** 2).mean()
+                    critic_loss = ((V - batch_ratings) ** 2).mean()
 
-                loss = actor_loss + self.critic_coefficient * critic_loss
+                    loss = actor_loss + self.critic_coefficient * critic_loss
 
-                # optimize nets
-                self.optimizer.zero_grad()
-                loss.backward()
-                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
-                self.optimizer.step()
+                    # optimize nets
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
+                    self.optimizer.step()
 
             # save model
             if iteration % 500 == 0:
