@@ -142,45 +142,44 @@ class PPO:
 
             if iteration % 5 == 0:
                 print('Learned Timesteps:', t_so_far, 'With last Rating:', batch_ratings[0],
-                      'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space+1))[0])
+                      'Action Distribution:', np.histogram(batch_acts, bins=np.arange(self.action_space + 1))[0])
 
             # calculate advantage estimates
             a_k = batch_ratings - V
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
+            print(a_k.std(), a_k.std() + 1e-10)
 
             # update net n times
-            with torch.autograd.detect_anomaly():
-                for _ in range(self.n_updates_per_iteration):
+            # with torch.autograd.detect_anomaly():
+            for _ in range(self.n_updates_per_iteration):
+                # calculate clipped loss for actor
+                V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
+                ratios = torch.exp(curr_log_probs - batch_log_probs)
 
-                    # calculate clipped loss for actor
-                    V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
-                    ratios = torch.exp(curr_log_probs - batch_log_probs)
+                surr1 = ratios * a_k
+                surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
+                actor_loss = (-torch.min(surr1, surr2)).mean()
 
-                    print(torch.min(ratios), torch.max(ratios), torch.min(a_k), torch.max(a_k))
-                    surr1 = ratios * a_k
-                    surr2 = torch.clamp(ratios, 1 - self.ppo_clip, 1 + self.ppo_clip) * a_k
-                    actor_loss = (-torch.min(surr1, surr2)).mean()
+                critic_loss = ((V - batch_ratings) ** 2).mean()
 
-                    critic_loss = ((V - batch_ratings) ** 2).mean()
+                loss = actor_loss + self.critic_coefficient * critic_loss
 
-                    loss = actor_loss + self.critic_coefficient * critic_loss
+                # optimize nets
+                self.optimizer.zero_grad()
+                loss.backward()
+                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
+                self.optimizer.step()
 
-                    # optimize nets
-                    self.optimizer.zero_grad()
-                    loss.backward()
-                    # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
-                    self.optimizer.step()
+        # save model
+        if iteration % 500 == 0:
+            # path to data folder
+            p = Path(os.getcwd()).parent.absolute()
+            p = p / 'saved-models' / 'ppo_atari' / \
+                (self.game.split('-')[0].split('/')[-1] + '_' + str(t_so_far) + '.pt')
 
-            # save model
-            if iteration % 500 == 0:
-                # path to data folder
-                p = Path(os.getcwd()).parent.absolute()
-                p = p / 'saved-models' / 'ppo_atari' / \
-                    (self.game.split('-')[0].split('/')[-1] + '_' + str(t_so_far) + '.pt')
-
-                torch.save({
-                    'steps': t_so_far,
-                    'network': self.network.state_dict(),
-                    'optimizer': self.optimizer.state_dict(),
-                }, p)
-                print('Saved model at', t_so_far, 'time steps')
+            torch.save({
+                'steps': t_so_far,
+                'network': self.network.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+            }, p)
+            print('Saved model at', t_so_far, 'time steps')
