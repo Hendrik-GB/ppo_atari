@@ -147,7 +147,7 @@ class PPO:
             # calculate advantage estimates
             a_k = batch_ratings - V
             a_k = (a_k - a_k.mean()) / (a_k.std() + 1e-10)
-            print(a_k.std(), a_k.std() + 1e-10)
+            print(a_k.std(), a_k.std() + 1e-10, torch.min(batch_ratings), torch.max(batch_ratings), torch.min(V), torch.max(V))
 
             # update net n times
             # with torch.autograd.detect_anomaly():
