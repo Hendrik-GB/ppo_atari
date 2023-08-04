@@ -29,7 +29,7 @@ class PPO:
         self.gamma = 0.99
         self.n_updates_per_iteration = 20
         self.ppo_clip = 0.2
-        self.lr = 0.00025
+        self.lr = 0.0025
         self.gradient_clip = -1
         self.critic_coefficient = 0.5
 
