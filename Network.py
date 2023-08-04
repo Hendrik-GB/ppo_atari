@@ -26,27 +26,22 @@ class CNN(nn.Module):
 
         self.actor = nn.Linear(128, out_dims)
         self.critic = nn.Linear(128, 1)
-        self.activation = nn.ReLU()
 
-        self.last_x = None
+        self.actor_activation = nn.Sigmoid()
+        self.activation = nn.Tanh()
 
     def action_only(self, x):
         x = self.forward(x)
-        x = self.activation(self.actor(x))
+        x = self.actor_activation(self.actor(x))
         return x
 
     def action_score(self, x):
         x = self.forward(x)
-        action = self.activation(self.actor(x))
+        action = self.actor_activation(self.actor(x))
         score = self.activation(self.critic(x))
         return action, score.squeeze()
 
     def forward(self, x):
-        self.last_x = x
-
-        if torch.isnan(torch.min(self.conv1.weight.data)):
-            print(self.last_x)
-
         # unsqueeze without framestack
         x = x.unsqueeze(dim=-3)
         x = x / 255.0
