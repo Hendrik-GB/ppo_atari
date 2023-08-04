@@ -25,7 +25,7 @@ class PPO:
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=self.lr, weight_decay=0.1)
 
     def _init_hyperparameters(self):
-        self.rollout_steps = 800  # timesteps per episode
+        self.rollout_steps = 600  # timesteps per episode
         self.gamma = 0.97
         self.n_updates_per_iteration = 20
         self.ppo_clip = 0.1
